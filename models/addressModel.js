@@ -7,7 +7,7 @@ const addressSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    street: { 
+    street: {
       type: String,
       required: true,
     },
@@ -25,6 +25,14 @@ const addressSchema = new mongoose.Schema(
     },
     zipCode: {
       type: String,
+      required: true,
+    },
+    latitude: {
+      type: Number,
+      required: true,
+    },
+    longitude: {
+      type: Number,
       required: true,
     },
   },

@@ -31,7 +31,8 @@ const getUserAddressById = async (req, res) => {
 
 // Create a new address for the logged-in user
 const createUserAddress = async (req, res) => {
-  const { street, city, state, country, zipCode } = req.body;
+  const { street, city, state, country, zipCode, longitude, latitude } =
+    req.body;
 
   // console.log('req.body::: ', req.body);
   try {
@@ -42,8 +43,9 @@ const createUserAddress = async (req, res) => {
       state,
       country,
       zipCode,
+      longitude,
+      latitude,
     });
-    console.log("newAddress::: ", newAddress);
     await newAddress.save();
     res.status(201).json({ newAddress, success: true });
   } catch (error) {
@@ -54,11 +56,12 @@ const createUserAddress = async (req, res) => {
 // Update address by ID for the logged-in user
 const updateUserAddressById = async (req, res) => {
   const { addressId } = req.params;
-  const { street, city, state, country, zipCode } = req.body;
+  const { street, city, state, country, zipCode, longitude, latitude } =
+    req.body;
   try {
     const address = await Address.findOneAndUpdate(
       { _id: addressId, user: req.userId },
-      { street, city, state, country, zipCode },
+      { street, city, state, country, zipCode, longitude, latitude },
       { new: true }
     );
     if (!address) {

@@ -11,6 +11,11 @@ const checkToken = require("./middleware/authToken");
 // Import routes
 const commonRoutes = require("./routes/common/common");
 const commonAddressRoutes = require("./routes/common/commonAddressRouter");
+const commonCategoryRoutes = require("./routes/common/commonCategoryRoutes");
+const commonProductRoutes = require("./routes/common/commonProductRoutes");
+const userRoutes = require("./routes/admin/userRoutes.js");
+const categoryRoutes = require("./routes/admin/categoryRoutes");
+const productRoutes = require("./routes/admin/productRoutes.js");
 
 const app = express();
 
@@ -23,11 +28,15 @@ app.use(express.json({ limit: "50mb" }));
 app.use("/admin", adminAuthMiddleware);
 
 // Admin Routes
+app.use("/admin/user", userRoutes);
+app.use("/admin/category", categoryRoutes);
+app.use("/admin/product", productRoutes);
 
 // Common Routes
 app.use("/", commonRoutes);
 app.use("/address", checkToken, commonAddressRoutes);
-
+app.use("/category", commonCategoryRoutes);
+app.use("/product", commonProductRoutes);
 // Error Handler Middleware
 app.use(errorHandler);
 
