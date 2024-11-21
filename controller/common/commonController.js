@@ -439,6 +439,14 @@ const signup = async (req, res) => {
     return;
   }
 
+  if (password.length < 6) {
+    res.status(400).json({
+      status: true,
+      message: "Password must be at least 6 characters long",
+    });
+    return;
+  }
+
   try {
     const foundUserEmail = await User.findOne({ email });
     const foundUserNumber = await User.findOne({ phoneNumber });
