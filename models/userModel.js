@@ -34,6 +34,13 @@ const userSchema = new mongoose.Schema(
       required: true,
       match: [/^[789]\d{9}$/, "Please enter a valid Indian phone number"],
     },
+    otp: {
+      type: String,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
