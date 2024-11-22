@@ -571,6 +571,11 @@ const updateUser = async (req, res) => {
 
     // If password is provided, hash it before saving
     if (password) {
+      if (password.length < 6) {
+        return res
+          .status(400)
+          .json({ message: "Password must be at least 6 characters" });
+      }
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
     }

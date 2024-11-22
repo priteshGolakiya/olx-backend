@@ -7,47 +7,36 @@ const getAllProduct = async (req, res) => {
     const { search, category } = req.query;
     let query = { isActive: true, status: "approved" };
 
-    // If there's a search query
     if (search) {
-      // First, find categories that match the search term
       const matchingCategories = await Category.find({
         name: { $regex: search, $options: "i" },
       }).select("_id");
 
-      // Extract category IDs
       const categoryIds = matchingCategories.map((cat) => cat._id);
 
-      // Build the query to search in both product details and matching categories
       query.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
-        { category: { $in: categoryIds } }, // Add products from matching categories
+        { category: { $in: categoryIds } },
       ];
     }
 
-    // Add specific category filter if provided
     if (category && category !== "all") {
-      // If we already have an $or condition from search
       if (query.$or) {
-        // Wrap existing conditions in $and to combine with category filter
         query = {
           $and: [{ $or: query.$or }, { category: category }],
         };
       } else {
-        // Simply add category to query if no search conditions
         query.category = category;
       }
     }
 
-    // Add pagination
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Get total count for pagination
     const total = await Product.countDocuments(query);
 
-    // Fetch products with sorting by latest
     const products = await Product.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -58,7 +47,6 @@ const getAllProduct = async (req, res) => {
       })
       .lean();
 
-    // Filter out products where category population failed (inactive categories)
     const filteredProducts = products.filter((product) => product.category);
 
     return res.status(200).json({
@@ -89,14 +77,13 @@ const getProductById = async (req, res) => {
       isActive: true,
     })
       .populate({
-        path: "user", // Populating the `user` field
-        select: "-password", // Excluding the `password` field
+        path: "user",
+        select: "-password",
       })
       .populate({
-        path: "category", // Populating the `category` field from `Category` model
+        path: "category",
       });
 
-    // If the product doesn't exist or is inactive
     const addressData = await Address.find({ user: product.user._id });
 
     if (!product) {
@@ -118,7 +105,7 @@ const getProductById = async (req, res) => {
       category: product.category.name,
       categoryId: product.category._id,
     };
-    // Return the product with populated user, address, and category details
+
     return res.status(200).json({
       success: true,
       product: filterData,
@@ -144,7 +131,6 @@ const getProductsByCategory = async (req, res) => {
       status: "approved",
     };
 
-    // Add search functionality within category
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -152,15 +138,12 @@ const getProductsByCategory = async (req, res) => {
       ];
     }
 
-    // Add pagination
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Get total count for pagination
     const total = await Product.countDocuments(query);
 
-    // Fetch products
     const products = await Product.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -311,6 +294,16 @@ const editProduct = async (req, res) => {
     const productId = req.params.id;
     const updatedData = req.body;
 
+    const existingProduct = await Product.findById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
+
+    const updateFields = {};
+
     const allowedFields = [
       "title",
       "price",
@@ -318,24 +311,34 @@ const editProduct = async (req, res) => {
       "isActive",
       "category",
     ];
-    const updateFields = {};
 
-    for (let field of allowedFields) {
-      if (updatedData[field]) {
+    allowedFields.forEach((field) => {
+      if (updatedData[field] !== undefined && updatedData[field] !== null) {
         updateFields[field] = updatedData[field];
       }
+    });
+
+    if (updatedData.imageUrl) {
+      updateFields.images = updatedData.imageUrl;
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
-      updateFields,
-      { new: true, runValidators: true }
+      { $set: updateFields },
+      {
+        new: true,
+        runValidators: true,
+        context: "query",
+      }
     );
 
+    console.log("Update Fields:", updateFields);
+    console.log("Updated Product:", updatedProduct);
+
     if (!updatedProduct) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: "Product not found.",
+        message: "Product update failed.",
       });
     }
 
@@ -345,10 +348,27 @@ const editProduct = async (req, res) => {
       product: updatedProduct,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Product Update Error:", error);
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors: Object.values(error.errors).map((err) => err.message),
+      });
+    }
+
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      message: error.message || "An error occurred while editing the product.",
+      message: "An error occurred while updating the product.",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
