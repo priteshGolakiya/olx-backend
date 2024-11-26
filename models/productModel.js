@@ -43,6 +43,17 @@ const productSchema = new mongoose.Schema(
     address: {
       type: String,
     },
+    // New field to track rejection details
+    rejectionDetails: {
+      count: {
+        type: Number,
+        default: 0,
+      },
+      lastRejectedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,
