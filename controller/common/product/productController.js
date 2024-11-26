@@ -293,7 +293,6 @@ const editProduct = async (req, res) => {
   try {
     const productId = req.params.id;
     const updatedData = req.body;
-
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({
