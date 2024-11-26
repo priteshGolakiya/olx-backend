@@ -14,7 +14,8 @@ const getApprovalRequests = async (req, res) => {
     const products = await Product.find(query)
       .populate({
         path: "user",
-        select: "userName email profilePic phoneNumber addresses totalProductRejections",
+        select:
+          "userName email profilePic phoneNumber addresses totalProductRejections",
         populate: {
           path: "addresses",
           select: "street city state zipCode",
@@ -30,7 +31,6 @@ const getApprovalRequests = async (req, res) => {
 
     // Count total pending products
     const totalProducts = await Product.countDocuments(query);
-    console.log("products::: ", products);
     res.status(200).json({
       success: true,
       data: products,
@@ -54,7 +54,6 @@ const getApprovalRequests = async (req, res) => {
 const approveRequest = async (req, res) => {
   try {
     const { productId } = req.params;
-    console.log("productId::: ", productId);
     const { status } = req.body;
 
     // Validate status
@@ -68,7 +67,8 @@ const approveRequest = async (req, res) => {
     // Find the product
     const product = await Product.findById(productId)
       .populate("user")
-      .populate("category");
+      .populate("category")
+      .sort({ createdAt: -1 });
 
     if (!product) {
       return res.status(404).json({
@@ -158,8 +158,59 @@ const bulkProcessProducts = async (req, res) => {
   }
 };
 
+const getRejectProduct = async (req, res) => {
+  try {
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { status: "rejected" };
+
+    // Fetch rejected products with populated user and category
+    const rejectedProducts = await Product.find(query)
+      .populate({
+        path: "user",
+        select:
+          "userName email profilePic phoneNumber addresses totalProductRejections",
+        populate: {
+          path: "addresses",
+          select: "street city state zipCode",
+        },
+      })
+      .populate({
+        path: "category",
+        select: "name",
+      })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    // Count total rejected products
+    const totalRejectedProducts = await Product.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: rejectedProducts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalRejectedProducts / limit),
+        totalRejectedProducts,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching rejected products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch rejected products",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getApprovalRequests,
   approveRequest,
   bulkProcessProducts,
+  getRejectProduct,
 };
