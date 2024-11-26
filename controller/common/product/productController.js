@@ -332,9 +332,6 @@ const editProduct = async (req, res) => {
       }
     );
 
-    console.log("Update Fields:", updateFields);
-    console.log("Updated Product:", updatedProduct);
-
     if (!updatedProduct) {
       return res.status(400).json({
         success: false,

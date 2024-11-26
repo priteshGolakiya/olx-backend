@@ -1,5 +1,6 @@
 const Product = require("../../../models/productModel");
 const User = require("../../../models/userModel");
+const mongoose = require("mongoose");
 
 // Get all users
 const getAllUsers = async (req, res) => {
@@ -24,10 +25,11 @@ const getAllUsers = async (req, res) => {
 
 // Toggle user restriction (block/unblock)
 const toggleUserRestriction = async (req, res) => {
+
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
 
     if (!user) {
       return res.status(404).json({
@@ -41,9 +43,9 @@ const toggleUserRestriction = async (req, res) => {
     user.isBlocked = isBlockingUser;
 
     // Find all products by this user
-    const userProducts = await Product.find({ user: user._id });
+    const userProducts = await Product.find({ user: user._id })
 
-    // Update product status based on user blocking/unblocking
+    // Reset or update product statuses and rejection details
     if (userProducts.length > 0) {
       const updatePromises = userProducts.map(async (product) => {
         if (isBlockingUser) {
@@ -51,11 +53,9 @@ const toggleUserRestriction = async (req, res) => {
           product.status = "rejected";
           product.rejectionDetails.count += 1;
           product.rejectionDetails.lastRejectedAt = new Date();
-
-          // Increment user's total product rejections
-          user.totalProductRejections += 1;
         } else {
-          // If unblocking user, set products back to pending
+          // If unblocking user, reset product rejection details
+          // Optional: You can choose to set back to pending or keep as rejected
           product.status = "pending";
           product.rejectionDetails.count = 0;
           product.rejectionDetails.lastRejectedAt = null;
@@ -66,8 +66,15 @@ const toggleUserRestriction = async (req, res) => {
       await Promise.all(updatePromises);
     }
 
-    // Save user after updating rejection count
+    // Reset total product rejections when unblocking
+    if (!isBlockingUser) {
+      user.totalProductRejections = 0;
+    }
+
+    // Save user after updating
     await user.save();
+
+    
 
     res.status(200).json({
       success: true,
@@ -79,6 +86,8 @@ const toggleUserRestriction = async (req, res) => {
       },
     });
   } catch (error) {
+  
+
     res.status(500).json({
       success: false,
       message: "Error updating user restriction status",
