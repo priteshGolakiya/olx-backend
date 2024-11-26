@@ -87,7 +87,7 @@ const approveRequest = async (req, res) => {
 
       // Optional: Increment user's total product rejections
       const user = product.user;
-      user.totalProductRejections = (user.totalProductRejections || 0) + 1;
+      // user.totalProductRejections = (user.totalProductRejections || 0) + 1;
 
       // // Check if user should be restricted
       // if (user.totalProductRejections >= user.rejectionThreshold) {
