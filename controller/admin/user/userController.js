@@ -92,7 +92,7 @@ const checkUserProductRejections = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).sort({ createdAt: -1 });
 
     if (!user) {
       return res.status(404).json({
@@ -261,7 +261,8 @@ const getUserById = async (req, res) => {
     const user = await User.findById(userId)
       .select("-password -otp")
       .populate("addresses")
-      .lean();
+      .lean()
+      .sort({ createdAt: -1 });
 
     if (!user) {
       return res.status(404).json({
