@@ -293,7 +293,6 @@ const editProduct = async (req, res) => {
   try {
     const productId = req.params.id;
     const updatedData = req.body;
-
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({
@@ -331,9 +330,6 @@ const editProduct = async (req, res) => {
         context: "query",
       }
     );
-
-    console.log("Update Fields:", updateFields);
-    console.log("Updated Product:", updatedProduct);
 
     if (!updatedProduct) {
       return res.status(400).json({

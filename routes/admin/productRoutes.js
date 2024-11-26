@@ -5,8 +5,10 @@ const {
   approveRequest,
   bulkProcessProducts,
   getRejectProduct,
+  getAllProduct
 } = require("../../controller/admin/product/productController");
 
+router.get("/", getAllProduct);
 router.get("/approval-requests", getApprovalRequests);
 router.get("/reject-product", getRejectProduct);
 router.put("/approve-request/:productId", approveRequest);
