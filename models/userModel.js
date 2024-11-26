@@ -41,6 +41,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // New field to track total product rejections
+    totalProductRejections: {
+      type: Number,
+      default: 0,
+    },
+    // New field to track rejection threshold
+    rejectionThreshold: {
+      type: Number,
+    },
   },
   {
     timestamps: true,
